@@ -163,7 +163,10 @@ class MLP:
         for i in xrange(max_epochs):
             # shuffle data
             # TODO shuffle data
-            np.random.shuffle(X)
+            shuffled = np.c_[X,y]
+            np.random.shuffle(shuffled)
+            X = shuffled[:, :-1]
+            y = shuffled[:, -1].astype(int) # np.c_ will promote y to be float type, same as X
             # iterate every batch
             for batch in xrange(0, n_samples, self.batch_size):
                 # TODO call forward function
@@ -193,8 +196,9 @@ class MLP:
         b = np.zeros((y.shape[0], self.output_size))
         for i in range(m):
             b[i, y[i]] = 1
-        #data_loss = 0.5 * np.sum((b[:n_samples] - probs) ** 2)
-        data_loss = -1. * np.sum(b[:n_samples] * np.log(probs))
+        data_loss = np.sum(-b * np.log(probs) - (1. - b) * np.log(1. - probs))
+        #data_loss = -0.5 * np.sum((b[:n_samples] - probs) ** 2)
+        #data_loss = -1. * np.sum(b[:n_samples] * np.log(probs))
         # TODO Add regularization term to loss
         data_loss += + self.reg_lambda/2. * np.sum(self.weights[-1] * self.weights[-1])
         return 1. / n_samples * data_loss
@@ -208,8 +212,8 @@ class MLP:
             self.layers[i] = self.activation_func(np.dot(self.layers[i-1],  self.weights[i-1])+ self.bias[i-1])
 
         # TODO output layer (Note here the activation is using output_layer func)
-        self.layers[-1] = self.output_layer(self.activation_func(np.dot(self.layers[self.n_layers],
-                                                   self.weights[self.n_layers])+ self.bias[self.n_layers]))
+        self.layers[-1] = self.output_layer(np.dot(self.layers[self.n_layers],
+                                                   self.weights[self.n_layers])+ self.bias[self.n_layers])
         return self.layers[-1]
 
     def backward(self, X, y):
@@ -227,7 +231,7 @@ class MLP:
             #print(self.deltas[-1].shape)
             #self.deltas[range(n_samples), b] -= 1
             #self.deltas /= n_samples
-            self.deltas[-1] = (self.deltas[-1] - b[:n_samples]) * self.activation_dfunc(self.layers[-1])
+            self.deltas[-1] = (b[:n_samples] - self.deltas[-1]) * self.activation_dfunc(self.layers[-1])
             #dW = self.deltas[-1] * self.layers[self.n_layers] + self.reg_lambda * self.weights[-1]
             dW = np.dot(self.layers[self.n_layers].T, self.deltas[-1]) + self.reg_lambda * self.weights[-1]
             dB = np.sum(self.deltas[-1], axis=0)
@@ -241,12 +245,9 @@ class MLP:
             for i in range(self.n_layers-1, -1, -1):
                 # TODO update deltas
                 ai = self.activation_dfunc(self.layers[i+1]) # ignore input layer
-                self.deltas[i] = np.dot(self.deltas[i+1], self.weights[i+1].T)
-                #print(self.deltas[i].shape)
-                #print(ai.shape)
-                self.deltas[i] *= ai #* ai
+                self.deltas[i] = np.dot(self.deltas[i+1], self.weights[i+1].T) * ai
                 # TODO update weights
-                dW = np.sum(self.deltas[i]*ai) + self.reg_lambda * self.weights[i]
+                dW = np.dot(self.layers[i].T, self.deltas[i]) + self.reg_lambda * self.weights[i]
                 dB = np.sum(self.deltas[i], axis=0)
                 self.weights[i] += -1. * self.lr * dW
                 self.bias[i] += -1. * self.lr * dB
@@ -270,7 +271,7 @@ class MLP:
         # TODO compute accuracy
         probs = self.predict(X)
         preds = np.argmax(probs, axis=1)
-        print(probs)
+        #print(probs)
         acc = np.mean(preds == y[:n_samples])
         return acc
 

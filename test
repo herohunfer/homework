@@ -1,0 +1,32 @@
+        for i in range(0, self.n_layers):
+            self.layers.append(np.empty((self.batch_size, self.hidden_layer_size[i])))
+            self.deltas.append(np.empty((self.batch_size, self.hidden_layer_size[i])))
+        # for output layer
+        self.layers.append(np.empty((self.batch_size, self.output_size)))
+        self.deltas.append(np.empty((self.batch_size, self.output_size)))
+
+
+   def forward(self, X):
+        # input layer
+        self.layers[0] = X
+
+        # TODO hidden layers
+        for i in self.hidden_layer_size:
+            self.
+
+        # TODO output layer (Note here the activation is using output_layer func)
+
+
+        return self.layers[-1]
+
+
+            def backward(self, X, y):
+        if self.loss == 'cross_entropy':
+            self.deltas[-1] = self.layers[-1]
+            # cross_entropy loss backprop
+            self.deltas[-1][range(X.shape[0]), y] -= 1
+
+            # TODO update deltas
+
+            # TODO update weights
+
