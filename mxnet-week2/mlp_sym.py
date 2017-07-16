@@ -43,17 +43,30 @@ def get_mlp_sym():
     return mlp
 
 
-def conv_layer():
+def conv_layer(input_layer, num_filter, activation=None, BN=False, pooling=False):
     """
     :return: a single convolution layer symbol
     """
     # todo: Design the simplest convolution layer
+    conv = mx.sym.Convolution(data=input_layer,
+                              num_filter=num_filter,
+                              kernel=(3,3),
+                              stride=(1,1),
+                              no_bias=True)
+
     # Find the doc of mx.sym.Convolution by help command
+    if activation is not None:
+        conv = mx.sym.Activation(data = conv, act_type=activation)
+
     # Do you need BatchNorm?
+    if BN:
+        conv = mx.sym.BatchNorm(conv)
+
     # Do you need pooling?
     # What is the expected output shape?
-
-    pass
+    if pooling:
+        conv = mx.sym.Pooling(data=conv, stride=(2, 2), kernel=(2, 2), pool_type='max')
+    return conv
 
 
 # Optional
@@ -72,7 +85,16 @@ def get_conv_sym():
     """
     data = mx.sym.Variable("data")
     # todo: design the CNN architecture
+    # Flatten the data from 4-D shape into 2-D (batch_size, num_channel*width*height)
+    #data_f = mx.sym.flatten(data=data)
     # How deep the network do you want? like 4 or 5
+    l = conv_layer(input_layer=data, num_filter=32, activation="relu", BN=False, pooling=True)
+    l = conv_layer(input_layer=l, num_filter=64, activation="relu", BN=False, pooling=True)
+    l = conv_layer(input_layer=l, num_filter=128, activation="relu", BN=False, pooling=True)
     # How wide the network do you want? like 32/64/128 kernels per layer
+    # MNIST has 10 classes
+    fc = mx.sym.FullyConnected(data=l,num_hidden=10, no_bias=True)
+    # Softmax with cross entropy loss
+    conv = mx.sym.SoftmaxOutput(data=fc, name='softmax')
     # How is the convolution like? Normal CNN? Inception Module? VGG like?
-    pass
+    return conv
