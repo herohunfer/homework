@@ -1,3 +1,9 @@
+# result
+accuracy=0.943800 
+INFO:root:Epoch[9] Train-accuracy=0.945354 
+INFO:root:Epoch[9] Time cost=63.314 
+INFO:root:Epoch[9] Validation-accuracy=0.950400
+
 # MXNET-Week2
 
 ## Useful git commands
